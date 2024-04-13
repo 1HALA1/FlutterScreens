@@ -41,7 +41,7 @@ class MyApp extends StatelessWidget {
         "/VoicePage": (context) => VoicePage(),
         "/Speechtotext": (context) => Speechtotext(),
         "/Congrats": (context) => Congrats(),
-        "/RegistrationRequestPage": (context) => RegistrationRequestPage(),
+        "/RegistrationRequestsPage": (context) => RegistrationRequestsPage(),
         "/Report" : (context) => Report(),
       },
     );

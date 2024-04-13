@@ -54,11 +54,11 @@ class _ManagerinterfaceState extends State<Managerinterface>
                   SizedBox(height: 20),
                   Appbuttons(
                       text: "Registration Requests",
-                      routeName: '/RegistrationRequestPage'),
+                      routeName: '/RegistrationRequestsPage'),
                   SizedBox(height: 20),
                   Appbuttons(text: "Random Texts", routeName: '/Randomtext'),
                   SizedBox(height: 20),
-                  Appbuttons(text: "Reports", routeName: '/Signup'),
+                  Appbuttons(text: "Reports", routeName: '/Report'),
                   SizedBox(height: 20),
                   Appbuttons(text: "Log Out", routeName: '/LandPage'),
                 ],
