@@ -1,9 +1,11 @@
-import 'package:flutter/material.dart';
-import 'package:speech_to_text/speech_to_text.dart';
-import 'package:speech_to_text/speech_recognition_result.dart';
 import 'package:avatar_glow/avatar_glow.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_interfaces/widgets/Appbuttons.dart';
+import 'package:speech_to_text/speech_to_text.dart';
 import 'package:word_generator/word_generator.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
+import 'package:speech_to_text/speech_recognition_result.dart';
+import 'dart:html';
 
 final RandomWord = WordGenerator();
 String noun = RandomWord.randomNoun();
@@ -27,22 +29,30 @@ class _SpeechtotextState extends State<Speechtotext> {
     _initSpeech();
   }
 
+  /// This has to happen only once per app
   void _initSpeech() async {
-    _speechToText.initialize(onError: (error) {
-      print('Error: $error');
+    await _speechToText.initialize();
+    setState(() {});
+  }
+
+  /// Each time to start a speech recognition session
+  void _startListening() async {
+    await _speechToText.listen(onResult: _onSpeechResult);
+    setState(() {
+      isListening = true;
     });
   }
 
-  void _startListening() async {
-    await _speechToText.listen(onResult: _onSpeechResult);
-    setState(() {});
-  }
-
+  /// Manually stop the active speech recognition session
   void _stopListening() async {
     await _speechToText.stop();
-    setState(() {});
+    setState(() {
+      isListening = false;
+    });
   }
 
+  /// This is the callback that the SpeechToText plugin calls when
+  /// the platform returns recognized words.
   void _onSpeechResult(SpeechRecognitionResult result) {
     setState(() {
       _lastWords = result.recognizedWords;
@@ -98,8 +108,13 @@ class _SpeechtotextState extends State<Speechtotext> {
               ),
               Expanded(
                 child: Text(
+                  // If listening is active show the recognized words
                   _speechToText.isListening
                       ? _lastWords
+                      // If listening isn't active but could be tell the user
+                      // how to start it, otherwise indicate that speech
+                      // recognition is not yet ready or not supported on
+                      // the target device
                       : _speechToText.isAvailable
                           ? 'Tap the microphone to start listening...'
                           : 'Speech not available',
@@ -110,46 +125,28 @@ class _SpeechtotextState extends State<Speechtotext> {
                     ? const Text("Success")
                     : const Text("Failed"),
               ),
-              const SizedBox(height: 200),
+              const SizedBox(
+                height: 200,
+              ),
               AvatarGlow(
                 animate: isListening,
                 duration: const Duration(milliseconds: 2000),
                 glowColor: const Color(0xFF2F66F5),
                 repeat: true,
                 child: GestureDetector(
-                  onDoubleTapDown: (details) async {
-                    if (!isListening) {
-                      var available = await speechToText.initialize();
-                      if (available) {
-                        setState(() {
-                          isListening = true;
-                          speechToText.listen(onResult: (result) {
-                            // Handle recognized text here if needed
-                          });
-                        });
-                      }
-                    }
+                  onTap: () {
+                    _speechToText.isNotListening
+                        ? _startListening()
+                        : _stopListening();
                   },
-                  onTapUp: (details) {
-                    setState(() {
-                      isListening = false;
-                    });
-                    speechToText.stop();
-                  },
-                  child: Stack(
-                    alignment: Alignment.bottomRight,
-                    children: [
-                      CircleAvatar(
-                        backgroundColor: const Color(0xFF2F66F5),
-                        radius: 50,
-                        child: Icon(
-                          isListening ? Icons.mic : Icons.mic_none,
-                          color: Colors.white,
-                          size: 40,
-                        ),
-                      ),
-                    
-                    ],
+                  child: CircleAvatar(
+                    backgroundColor: const Color(0xFF2F66F5),
+                    radius: 50,
+                    child: Icon(
+                      isListening ? Icons.mic : Icons.mic_none,
+                      color: Colors.white,
+                      size: 40,
+                    ),
                   ),
                 ),
               ),
@@ -158,7 +155,7 @@ class _SpeechtotextState extends State<Speechtotext> {
                 onPressed: () {
                   regren();
                 },
-                text: 'Click to regenerate a word',
+                text: "Click to regenerate a word",
               ),
               const SizedBox(height: 20),
               Appbuttons(text: "Submit", routeName: '/Congrats'),
