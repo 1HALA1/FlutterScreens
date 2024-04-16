@@ -13,6 +13,7 @@ import 'package:flutter_interfaces/Signup.dart';
 import 'package:flutter_interfaces/Speechtotext.dart';
 import 'package:flutter_interfaces/Userinterface.dart';
 import 'package:flutter_interfaces/VoicePage.dart.dart';
+import 'package:flutter_interfaces/voicerec.dart';
 
 
 void main() {

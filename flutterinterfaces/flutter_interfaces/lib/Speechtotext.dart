@@ -1,7 +1,12 @@
-import 'package:avatar_glow/avatar_glow.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_interfaces/widgets/Appbuttons.dart';
 import 'package:speech_to_text/speech_to_text.dart';
+import 'package:speech_to_text/speech_recognition_result.dart';
+import 'package:avatar_glow/avatar_glow.dart';
+import 'package:flutter_interfaces/widgets/Appbuttons.dart';
+import 'package:word_generator/word_generator.dart';
+
+final RandomWord = WordGenerator();
+String noun = RandomWord.randomNoun();
 
 class Speechtotext extends StatefulWidget {
   const Speechtotext({Key? key}) : super(key: key);
@@ -11,21 +16,64 @@ class Speechtotext extends StatefulWidget {
 }
 
 class _SpeechtotextState extends State<Speechtotext> {
+  SpeechToText _speechToText = SpeechToText();
+  String _lastWords = '';
   SpeechToText speechToText = SpeechToText();
   bool isListening = false;
 
   @override
+  void initState() {
+    super.initState();
+    _initSpeech();
+  }
+
+  void _initSpeech() async {
+    _speechToText.initialize(onError: (error) {
+      print('Error: $error');
+    });
+  }
+
+  void _startListening() async {
+    await _speechToText.listen(onResult: _onSpeechResult);
+    setState(() {});
+  }
+
+  void _stopListening() async {
+    await _speechToText.stop();
+    setState(() {});
+  }
+
+  void _onSpeechResult(SpeechRecognitionResult result) {
+    setState(() {
+      _lastWords = result.recognizedWords;
+    });
+  }
+
   Widget build(BuildContext context) {
+    void regren() {
+      setState(() {
+        noun = RandomWord.randomNoun();
+        _lastWords = '';
+      });
+    }
+
+    bool verifyText() {
+      if (_lastWords.contains(noun)) {
+        return true;
+      }
+      return false;
+    }
+
     return Scaffold(
       appBar: AppBar(
-        iconTheme: IconThemeData(color: Colors.black),
+        iconTheme: const IconThemeData(color: Colors.black),
         leading: IconButton(
-          icon: Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
-      backgroundColor: Colors.grey[200],
-        ),
         backgroundColor: Colors.grey[200],
+      ),
+      backgroundColor: Colors.grey[200],
       body: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
         child: Container(
@@ -39,7 +87,7 @@ class _SpeechtotextState extends State<Speechtotext> {
             children: [
               Center(
                 child: Text(
-                  'Read the following text for authentication:',
+                  'Read the following text for authentication: $noun',
                   style: TextStyle(
                     fontSize: 24,
                     color: isListening ? Colors.black87 : Colors.black54,
@@ -48,12 +96,24 @@ class _SpeechtotextState extends State<Speechtotext> {
                   textAlign: TextAlign.center,
                 ),
               ),
-              SizedBox(
-                height: 200,
+              Expanded(
+                child: Text(
+                  _speechToText.isListening
+                      ? _lastWords
+                      : _speechToText.isAvailable
+                          ? 'Tap the microphone to start listening...'
+                          : 'Speech not available',
+                ),
               ),
+              Expanded(
+                child: verifyText()
+                    ? const Text("Success")
+                    : const Text("Failed"),
+              ),
+              const SizedBox(height: 200),
               AvatarGlow(
                 animate: isListening,
-                duration: Duration(milliseconds: 2000),
+                duration: const Duration(milliseconds: 2000),
                 glowColor: const Color(0xFF2F66F5),
                 repeat: true,
                 child: GestureDetector(
@@ -64,9 +124,7 @@ class _SpeechtotextState extends State<Speechtotext> {
                         setState(() {
                           isListening = true;
                           speechToText.listen(onResult: (result) {
-                            setState(() {
-                              // Handle recognized text here if needed
-                            });
+                            // Handle recognized text here if needed
                           });
                         });
                       }
@@ -78,21 +136,31 @@ class _SpeechtotextState extends State<Speechtotext> {
                     });
                     speechToText.stop();
                   },
-                  child: CircleAvatar(
-                    backgroundColor: const Color(0xFF2F66F5),
-                    radius: 50,
-                    child: Icon(
-                      isListening ? Icons.mic : Icons.mic_none,
-                      color: Colors.white,
-                      size: 40,
-                    ),
+                  child: Stack(
+                    alignment: Alignment.bottomRight,
+                    children: [
+                      CircleAvatar(
+                        backgroundColor: const Color(0xFF2F66F5),
+                        radius: 50,
+                        child: Icon(
+                          isListening ? Icons.mic : Icons.mic_none,
+                          color: Colors.white,
+                          size: 40,
+                        ),
+                      ),
+                    
+                    ],
                   ),
                 ),
               ),
-              SizedBox(height: 45),
+              const SizedBox(height: 45),
               Appbuttons(
-                  text: "Regenerate random text", routeName: '/Speechtotext'),
-              SizedBox(height: 20),
+                onPressed: () {
+                  regren();
+                },
+                text: 'Click to regenerate a word',
+              ),
+              const SizedBox(height: 20),
               Appbuttons(text: "Submit", routeName: '/Congrats'),
             ],
           ),
